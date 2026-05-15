@@ -54,7 +54,7 @@ class Node:
         router = Router.create(
             keypair,
             bootstrap_peers=args.bootstrap_peers,
-            listen_port=args.libp2p_port,
+            listen_port=args.zenoh_port,
         )
         await router.register_topic(topics.GLOBAL_EVENTS)
         await router.register_topic(topics.LOCAL_EVENTS)
@@ -290,10 +290,10 @@ def main():
         detach_stdio_to_devnull()
         logger.info("Detached stdio to /dev/null")
 
-    logger.info(f"{'=' * 40}")
-    logger.info(f"Starting EXO | pid={os.getpid()}")
-    logger.info(f"{'=' * 40}")
-    logger.info(f"EXO_LIBP2P_NAMESPACE: {os.getenv('EXO_LIBP2P_NAMESPACE')}")
+    logger.info(f"pid = {os.getpid()}")
+    if os.getenv("EXO_LIBP2P_NAMESPACE"):
+        raise ValueError("EXO_LIBP2P_NAMESPACE has been removed - use EXO_ZENOH_NAMESPACE instead")
+    logger.info(f"EXO_ZENOH_NAMESPACE: {os.getenv('EXO_ZENOH_NAMESPACE')}")
 
     if args.offline:
         logger.info("Running in OFFLINE mode — no internet checks, local models only")
@@ -340,7 +340,7 @@ class Args(FrozenModel):
     fast_synch: bool | None = None  # None = auto, True = force on, False = force off
     no_stdio: bool = False
     bootstrap_peers: list[str] = []
-    libp2p_port: int
+    zenoh_port: int
 
     @classmethod
     def parse(cls) -> Self:
@@ -413,11 +413,11 @@ class Args(FrozenModel):
             help="Comma-separated libp2p multiaddrs to dial on startup (env: EXO_BOOTSTRAP_PEERS)",
         )
         parser.add_argument(
-            "--libp2p-port",
+            "--zenoh-port",
             type=int,
             default=0,
-            dest="libp2p_port",
-            help="Fixed TCP port for libp2p to listen on (0 = OS-assigned).",
+            dest="zenoh_port",
+            help="Fixed TCP port for zenoh to listen on (0 = OS-assigned).",
         )
         fast_synch_group = parser.add_mutually_exclusive_group()
         fast_synch_group.add_argument(
